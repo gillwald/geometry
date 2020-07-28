@@ -8,6 +8,8 @@
 #include <gillwald/geometry.hpp>
 
 namespace geometry {
+
+
 	std::vector<std::vector<int>> bresenham_conversion(int x0, int y0, int x1, int y1){
 
 	  // Vector of points
@@ -79,4 +81,31 @@ namespace geometry {
 	  return v;
 
 	}
+
+	std::vector<Cell> bresenham_conversion(const Cell &start, const Cell &end){
+
+		const auto pixels = bresenham_conversion(start.x, start.y, end.x, end.y);
+
+		std::vector<Cell> cells;
+
+		for (const auto &pixel:pixels) {
+			cells.emplace_back(Cell{pixel[0], pixel[1]});
+		}
+
+		return cells;
+
+	}
+
+	std::vector<Cell> raytrace(const Cell& start, const Cell& end, int max_length) {
+	  if (max_length < 1) {
+	  	return {};
+	  }
+	  // Get the interpolated pixels bresenham
+	  const auto pixels = bresenham_conversion(start, end);	 
+
+	  return {pixels.begin(), pixels.begin() + std::min(static_cast<int>(pixels.size()),max_length)};
+
+	}
+
+
 }  // namespace geometry
