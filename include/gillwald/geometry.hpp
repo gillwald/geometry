@@ -44,4 +44,20 @@ namespace geometry {
    * @returns Pixel coordinates representing line
    */	  
   [[nodiscard]] std::vector<Cell> raytrace(const Cell& start, const Cell& end, int max_length);
+
+  /**
+   * @brief Creates an outline between vertices
+   * @param polygon Vertices of the polygon
+   * @param size_x Max number of elements?
+   * @returns Pixel coordinates representing outline of polygon
+   */	  
+  [[nodiscard]] std::vector<Cell> polygonOutline(const std::vector<Cell>& polygon, int size_x);
+
+  /**
+   * @brief Creates an area of cells that represent the footprint of the robot
+   * @param polygon Max number of elements?
+   * @returns Pixel coordinates representing footprint of the robot
+   */	  
+   [[nodiscard]] std::vector<Cell> convexFill(const std::vector<Cell>& polygon);
+
 }  // namespace geometry

@@ -2,6 +2,7 @@
 
 // C++ Standard Library
 #include <vector>
+#include <tuple>
 
 // Gtest
 #include <gtest/gtest.h>
@@ -12,6 +13,7 @@
 
 using ::testing::ElementsAre;
 using ::testing::ElementsAreArray;
+using ::testing::UnorderedElementsAreArray;
 
 namespace geometry {
 
@@ -295,6 +297,97 @@ TEST(raytrace, negative_length) {
 	// THEN the resulting line should have 3 elements equal to the expected vector
 	EXPECT_EQ(pixels.size(), 0);	
 }
+
+/**
+* @brief Creates struct for testing polygonOutline
+*/	
+struct PolygonScenario{
+	std::vector<Cell> vertices;          /**< The vertices of the polygon to create*/
+	int size_x;							 /**< Maximum length of a polygon side*/
+	int expected_size; 					 /**< Expected number of cells for the outline*/
+	std::vector<Cell> expected_elements; /**< Expected cells for the outline*/
+};
+
+class PolygonOutlineTests : public :: testing::TestWithParam<PolygonScenario> {};
+
+TEST_P(PolygonOutlineTests, outline_tests){
+
+	const auto curr_scenario = GetParam();
+
+	// GIVEN the vertices of a polygon
+	const std::vector<Cell> vertices = curr_scenario.vertices;
+	const auto size_x = curr_scenario.size_x;
+
+	// WHEN the outline is created
+	const auto outline = polygonOutline(vertices, size_x);
+
+	// THEN the resulting outline should be of expected size and contain the expected elements
+	EXPECT_EQ(outline.size(), curr_scenario.expected_size);
+	EXPECT_THAT(outline, ElementsAreArray(curr_scenario.expected_elements));		
+
+}
+
+INSTANTIATE_TEST_CASE_P(
+	PolygonOutlineGroup,
+	PolygonOutlineTests,
+	::testing::Values(
+		// singular point
+		PolygonScenario{{{0,0}}, std::numeric_limits<int>::max(), 1, {{0,0}}},
+		// small square
+		PolygonScenario{{{0,0},{1,0},{1,1},{0,1}}, std::numeric_limits<int>::max(), 4, {{0,0},{1,0},{1,1},{0,1}}},
+		// big square
+		PolygonScenario{{{0,0},{5,0},{5,5},{0,5}}, std::numeric_limits<int>::max(), 20, {{0,0},{1,0},{2,0},{3,0},{4,0},{5,0},{5,1},{5,2},{5,3},{5,4},{5,5},{4,5},{3,5},{2,5},{1,5},{0,5},{0,4},{0,3},{0,2},{0,1}}},
+		// tilted square
+		PolygonScenario{{{0,0},{4,1},{3,5},{-1,4}}, std::numeric_limits<int>::max(), 16, {{0,0},{1,0},{2,0},{3,1},{4,1},{4,2},{4,3},{3,4},{3,5},{2,5},{1,5},{0,4},{-1,4},{-1,3},{-1,2},{0,1}}}, 
+		// weird polygon
+		PolygonScenario{{{0,0},{3,2},{6,1},{3,5}}, std::numeric_limits<int>::max(), 15, {{0,0},{1,1},{2,1},{3,2},{4,2},{5,1},{6,1},{5,2},{5,3},{4,4},{3,5},{2,4},{2,3},{1,2},{1,1}}}
+		)
+	);
+
+/**
+* @brief Creates struct for testing convexFill
+*/	
+struct ConvexScenario
+{
+	std::vector<Cell> outline; 			 /**< outline The outline to fill*/
+	int expected_size; 					 /**< Expected number of cells for filled polygon*/
+	std::vector<Cell> expected_elements; /**< Expected cells for filled polygon*/	
+};
+
+class ConvexFillTests : public ::testing::TestWithParam<ConvexScenario> {};
+
+TEST_P(ConvexFillTests, fill_tests){
+
+	const auto curr_scenario = GetParam();
+
+	// GIVEN a the outline of the polygon, and a size
+	const std::vector<Cell> outline = curr_scenario.outline;
+
+	// WHEN the outline is filled in
+	const auto filled_cells = convexFill(outline);
+
+	// THEN the resulting area should be xx elements and equal to expected 
+	EXPECT_EQ(filled_cells.size(), curr_scenario.expected_size);
+	EXPECT_THAT(filled_cells, UnorderedElementsAreArray(curr_scenario.expected_elements));		
+
+}
+
+INSTANTIATE_TEST_CASE_P(
+	ConvexFillGroup,
+	ConvexFillTests,
+	::testing::Values(
+		// singular point
+		ConvexScenario{polygonOutline({{0,0}}, std::numeric_limits<int>::max()), 1, {{0,0}}},
+		// small square
+		ConvexScenario{polygonOutline({{0,0},{1,0},{1,1},{0,1}}, std::numeric_limits<int>::max()), 4, {{0,0},{1,0},{1,1},{0,1}}},
+		// big square
+		ConvexScenario{polygonOutline({{0,0},{5,0},{5,5},{0,5}}, std::numeric_limits<int>::max()), 36, {{0,0},{1,0},{2,0},{3,0},{4,0},{5,0},{0,1},{1,1},{2,1},{3,1},{4,1},{5,1},{0,2},{1,2},{2,2},{3,2},{4,2},{5,2},{0,3},{1,3},{2,3},{3,3},{4,3},{5,3},{0,4},{1,4},{2,4},{3,4},{4,4},{5,4},{0,5},{1,5},{2,5},{3,5},{4,5},{5,5}}},
+		// tilted square
+		ConvexScenario{polygonOutline({{0,0},{4,1},{3,5},{-1,4}}, std::numeric_limits<int>::max()), 28, {{0,0},{1,0},{2,0},{0,1},{1,1},{2,1},{3,1},{4,1},{-1,2},{0,2},{1,2},{2,2},{3,2},{4,2},{-1,3},{0,3},{1,3},{2,3},{3,3},{4,3},{-1,4},{0,4},{1,4},{2,4},{3,4},{1,5},{2,5},{3,5}}},
+		// weird polygon
+		ConvexScenario{polygonOutline({{0,0},{3,2},{6,1},{3,5}}, std::numeric_limits<int>::max()), 18, {{0,0},{1,1},{2,1},{5,1},{6,1},{1,2},{2,2},{3,2},{4,2},{5,2},{2,3},{3,3},{4,3},{5,3},{2,4},{3,4},{4,4},{3,5}}}
+		)
+	);
 
 }  // namespace geometry
 
