@@ -42,5 +42,5 @@ user@gillwald-geometry:~/geometry$ make
 
 # Test the code
 ```
-user@gillwald-geometry:~/geometry$ ./geometry_tests
+user@gillwald-geometry:~/geometry$ ./geometry_tests 
 ```
